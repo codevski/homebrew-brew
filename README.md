@@ -6,10 +6,10 @@ Personal Homebrew tap for custom casks and formulas. Local patches, unmaintained
 
 ```bash
 # Tap the repo
-brew tap codevski/homebrew
+brew tap codevski/brew
 
 # Install fladder (or any cask/formula)
-brew install codevski/homebrew/fladder
+brew install codevski/brew/fladder
 
 # Upgrade everything
 brew upgrade
