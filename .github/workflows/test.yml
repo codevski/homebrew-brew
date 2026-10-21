@@ -18,6 +18,7 @@ jobs:
   test:
     runs-on: macos-latest
     env:
+      HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
       HOMEBREW_NO_AUTO_UPDATE: 1
     steps:
       - uses: actions/checkout@v5
