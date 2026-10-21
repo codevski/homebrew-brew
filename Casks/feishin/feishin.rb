@@ -2,11 +2,10 @@ cask "feishin" do
   arch arm: "arm64", intel: "x64"
 
   version "1.13.0"
-
   sha256 arm:   "967d6476ae3a06549798f466a64aeeefc39408dcfe271cb753b4c67d8b384b69",
          intel: "da501d8fe9b0150505f4a6b91b4af4aa2bc4cd619339c4c814d1df7c460244a6"
-  url "https://github.com/jeffvli/feishin/releases/download/v#{version}/Feishin-#{version}-mac-#{arch}.dmg",
-      verified: "github.com/jeffvli/feishin/"
+
+  url "https://github.com/jeffvli/feishin/releases/download/v#{version}/Feishin-#{version}-mac-#{arch}.dmg"
   name "Feishin"
   desc "Modern self-hosted music player"
   homepage "https://github.com/jeffvli/feishin"
@@ -16,13 +15,16 @@ cask "feishin" do
     strategy :github_latest
   end
 
-  depends_on macos: :catalina
+  depends_on macos: :monterey
 
   app "Feishin.app"
 
   # Remove quarantine as postinstall so user doesn't have to do it automatically
-  postflight do
-    system_command "/usr/bin/xattr", args: ["-r", "-d", "com.apple.quarantine", "#{appdir}/Feishin.app"]
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args:           ["-r", "-d", "com.apple.quarantine", "{{appdir}}/Feishin.app"],
+        writable_paths: ["Feishin.app"],
+        writable_base:  :appdir
   end
 
   zap trash: [
