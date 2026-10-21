@@ -27,9 +27,10 @@ jobs:
       - name: Set up Homebrew with this checkout as the tap
         run: |
           brew update --quiet
-          tap="$(brew --repository)/Library/Taps/codevski"
-          mkdir -p "$tap"
-          ln -sfn "$GITHUB_WORKSPACE" "$tap/homebrew-brew"
+          tap_dir="$(brew --repository)/Library/Taps/$GITHUB_REPOSITORY"
+          mkdir -p "$(dirname "$tap_dir")"
+          ln -sfn "$GITHUB_WORKSPACE" "$tap_dir"
+          echo "TAP=${GITHUB_REPOSITORY%%/*}/${GITHUB_REPOSITORY#*/homebrew-}" >> "$GITHUB_ENV"
 
       - name: Style, audit and install changed casks
         run: |
@@ -42,7 +43,7 @@ jobs:
           [ -n "$files" ] || { echo "No casks changed"; exit 0; }
 
           for f in $files; do
-            cask="codevski/brew/$(basename "$f" .rb)"
+            cask="$TAP/$(basename "$f" .rb)"
             echo "::group::$cask"
             brew style "$cask"
             brew audit --cask --strict --online "$cask"

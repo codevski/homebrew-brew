@@ -21,25 +21,29 @@ jobs:
         cask: [feishin, fladder, ps5upload]
     env:
       CASK: ${{ matrix.cask }}
-      TAP_CASK: codevski/brew/${{ matrix.cask }}
       BRANCH: bump/${{ matrix.cask }}
       GH_TOKEN: ${{ github.token }}
       HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
       HOMEBREW_NO_AUTO_UPDATE: 1
+      GIT_AUTHOR_NAME: ${{ github.repository_owner }}
+      GIT_AUTHOR_EMAIL: ${{ github.repository_owner_id }}+${{ github.repository_owner }}@users.noreply.github.com
+      GIT_COMMITTER_NAME: ${{ github.repository_owner }}
+      GIT_COMMITTER_EMAIL: ${{ github.repository_owner_id }}+${{ github.repository_owner }}@users.noreply.github.com
     steps:
       - uses: actions/checkout@v5
 
       - name: Set up Homebrew with this checkout as the tap
         run: |
           brew update --quiet
-          tap="$(brew --repository)/Library/Taps/codevski"
-          mkdir -p "$tap"
-          ln -sfn "$GITHUB_WORKSPACE" "$tap/homebrew-brew"
+          tap_dir="$(brew --repository)/Library/Taps/$GITHUB_REPOSITORY"
+          mkdir -p "$(dirname "$tap_dir")"
+          ln -sfn "$GITHUB_WORKSPACE" "$tap_dir"
+          echo "TAP=${GITHUB_REPOSITORY%%/*}/${GITHUB_REPOSITORY#*/homebrew-}" >> "$GITHUB_ENV"
 
       - name: Check for a new version
         id: check
         run: |
-          info=$(brew livecheck --cask --json "$TAP_CASK")
+          info=$(brew livecheck --cask --json "$TAP/$CASK")
           current=$(jq -r '.[0].version.current' <<<"$info")
           latest=$(jq -r '.[0].version.latest' <<<"$info")
           echo "current=$current latest=$latest"
@@ -61,31 +65,31 @@ jobs:
 
       - name: Update version and checksums
         if: steps.check.outputs.bump == 'true'
+        env:
+          LATEST: ${{ steps.check.outputs.latest }}
         run: |
           git switch -C "$BRANCH"
           brew bump-cask-pr --write-only --no-audit --no-browse \
-            --version "${{ steps.check.outputs.latest }}" "$TAP_CASK"
+            --version "$LATEST" "$TAP/$CASK"
 
       - name: Audit
         if: steps.check.outputs.bump == 'true'
         run: |
-          brew style "$TAP_CASK"
-          brew audit --cask --strict --online "$TAP_CASK"
-          brew audit --cask --strict --online --arch=intel "$TAP_CASK"
+          brew style "$TAP/$CASK"
+          brew audit --cask --strict --online "$TAP/$CASK"
+          brew audit --cask --strict --online --arch=intel "$TAP/$CASK"
 
       - name: Test install
         if: steps.check.outputs.bump == 'true'
         run: |
-          brew install --cask "$TAP_CASK"
-          brew uninstall --cask --zap "$TAP_CASK"
+          brew install --cask "$TAP/$CASK"
+          brew uninstall --cask --zap "$TAP/$CASK"
 
       - name: Open or update pull request
         if: steps.check.outputs.bump == 'true'
         env:
           LATEST: ${{ steps.check.outputs.latest }}
         run: |
-          git config user.name "codevski"
-          git config user.email "1435321+codevski@users.noreply.github.com"
           git commit -am "Bump $CASK to $LATEST"
           git push --force origin "$BRANCH"
 
@@ -99,7 +103,7 @@ jobs:
 
           Test locally:
           \`\`\`
-          cd \"\$(brew --repository codevski/brew)\" && gh pr checkout $BRANCH
+          cd \"\$(brew --repository $TAP)\" && gh pr checkout $BRANCH
           brew reinstall --cask $CASK
           git checkout main
           \`\`\`"
