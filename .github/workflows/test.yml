@@ -1,0 +1,49 @@
+name: Test casks
+
+on:
+  pull_request:
+    paths:
+      - "Casks/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Homebrew with this checkout as the tap
+        run: |
+          brew update --quiet
+          tap="$(brew --repository)/Library/Taps/codevski"
+          mkdir -p "$tap"
+          ln -sfn "$GITHUB_WORKSPACE" "$tap/homebrew-brew"
+
+      - name: Style, audit and install changed casks
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$BASE" ]; then
+            files=$(git diff --name-only --diff-filter=AM "$BASE" HEAD -- 'Casks/**/*.rb')
+          else
+            files=$(git ls-files 'Casks/**/*.rb')
+          fi
+          [ -n "$files" ] || { echo "No casks changed"; exit 0; }
+
+          for f in $files; do
+            cask="codevski/brew/$(basename "$f" .rb)"
+            echo "::group::$cask"
+            brew style "$cask"
+            brew audit --cask --strict --online "$cask"
+            brew audit --cask --strict --online --arch=intel "$cask"
+            brew install --cask "$cask"
+            brew uninstall --cask --zap "$cask"
+            echo "::endgroup::"
+          done
