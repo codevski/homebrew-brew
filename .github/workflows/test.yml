@@ -31,7 +31,10 @@ jobs:
           tap_dir="$(brew --repository)/Library/Taps/$GITHUB_REPOSITORY"
           mkdir -p "$(dirname "$tap_dir")"
           ln -sfn "$GITHUB_WORKSPACE" "$tap_dir"
-          echo "TAP=${GITHUB_REPOSITORY%%/*}/${GITHUB_REPOSITORY#*/homebrew-}" >> "$GITHUB_ENV"
+          tap="${GITHUB_REPOSITORY%%/*}/${GITHUB_REPOSITORY#*/homebrew-}"
+          # Homebrew 7 refuses to load casks from untrusted third-party taps.
+          brew trust --tap "$tap"
+          echo "TAP=$tap" >> "$GITHUB_ENV"
 
       - name: Style, audit and install changed casks
         run: |
