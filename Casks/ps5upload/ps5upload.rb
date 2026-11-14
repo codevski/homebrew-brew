@@ -1,13 +1,13 @@
 cask "ps5upload" do
-  version "11.0.8"
+  version "12.4.19"
 
   on_arm do
-    sha256 "1fa372776d456feb5a3f501656b3d3f952c10496a120213a38192b3d3bd52062"
+    sha256 "03066eff305a6c252fc9d9a1a8bb1e9e1c60a0f56a1b2b7811343917bd0745a6"
 
     url "https://github.com/phantomptr/ps5upload/releases/download/v#{version}/PS5Upload-#{version}-mac-arm64.dmg"
   end
   on_intel do
-    sha256 "40084e3037fbe5980400c39579a485ac40d94e0c6ab536d406cc6286689bb279"
+    sha256 "68c7680e96b0490c0f088ec2199140a7559e5b0f4072b5ba9e5e0c13272d1a59"
 
     url "https://github.com/phantomptr/ps5upload/releases/download/v#{version}/PS5Upload-#{version}-mac-x64.dmg"
   end
